@@ -1,0 +1,146 @@
+<html>
+  <head>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    
+    <script type="text/javascript">
+    google.charts.load('current', {packages: ['corechart', 'bar']});
+    google.charts.setOnLoadCallback(drawAxisTickColors);
+
+    function drawAxisTickColors() {
+    var data = new google.visualization.DataTable();
+    var data = google.visualization.arrayToDataTable([
+        [HEADERcolumn_div]
+        [DATAcolumn_div]
+        ]);
+
+    var options = {
+    title: 'Aufteilung Stunden Pro Tag',
+    legend: { position: 'bottom', maxLines: 3 },
+    bar: { groupWidth: '75%' },
+    isStacked: true,
+    };
+
+
+
+      var chart = new google.visualization.ColumnChart(document.getElementById('column_div'));
+      chart.draw(data, options);
+    }
+    </script>
+    
+    <script type="text/javascript">
+      google.charts.load('current', {'packages':['corechart']});
+      google.charts.setOnLoadCallback(drawChart);
+
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+        [HEADERcurve_chart]
+        [DATAcurve_chart]
+        ]);
+
+        var options = {
+          title: '5 Tage Index Verrechnungsprozentsatz',
+          curveType: 'function',
+          legend: { position: 'bottom' }
+        };
+
+        var chart = new google.visualization.LineChart(document.getElementById('curve_chart'));
+
+        chart.draw(data, options);
+      }
+    </script>
+    
+    
+    <script type="text/javascript">
+      google.charts.load("current", {packages:["corechart"]});
+      google.charts.setOnLoadCallback(drawChart);
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+          [DATAPie]
+        ]);
+
+        var options = {
+          title: 'Verrechnungsprozentsatz der letzten 30 Tage',
+          pieHole: 0.5,
+          legend: { position: 'bottom' },
+          chartArea: {'width': '50%', 'height': '60%','left':'14%'},
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('donutchart'));
+        chart.draw(data, options);
+      }
+    </script>
+
+  </head>
+  <style>
+    body {padding-top:0;margin-top: 0;padding-bottom:0;margin-bottom: 0}
+    .myDiv {display: block; margin-left: auto; margin-right: auto;padding-top:0;text-align:center;margin-top:20;margin-bottom: 40;width: 1300px; height: 500px;}
+    .css-ampel {
+          display: inline-block;
+          position: relative;
+          width: 110px;
+          height:  70%;
+          top:-400px;
+          Right:-250px;
+          margin-top: auto; margin-bottom: auto;
+          border-radius: 6px;
+          background-color: black;
+        }
+
+        .css-ampel span,
+        .css-ampel:before,
+        .css-ampel:after {
+            content: "";
+            color: white;
+            position: absolute;
+            border-radius: 50%;
+            width: 80%;
+            height: 25%;
+            left:10%;
+        }    
+
+        .css-ampel:before {
+            top: 5%;
+            background-color: red;
+            background-color: dimgrey;
+        }
+
+        .css-ampel:after {
+            top: 37.5%;
+            background-color: yellow;
+            background-color: dimgrey;
+        }
+
+        .css-ampel span {
+            top: 70%;
+            background-color: green;
+            background-color: dimgrey;
+        }    
+
+        .ampelrot:before {
+            background-color: red;
+            box-shadow: 0 0 20px red;
+        }
+
+        .ampelgelb:after {
+            background-color: yellow;
+            box-shadow: 0 0 20px yellow;
+        }
+
+        .ampelgruen span {
+            background-color: limegreen;
+            box-shadow: 0 0 20px limegreen;
+        }
+  </style>
+    <body>
+    <div id="donutchart"  style="margin-bottom:-30;" class="myDiv"></div>
+    
+    <div id="test" style="margin-bottom:-500;" class="myDiv">
+<span class="css-ampel ampel[ampelfarbe]"><span>
+    </div>
+    
+    <div id="curve_chart" class="myDiv"></div>
+    <div id="column_div" class="myDiv"></div>
+    
+    <h1 style="position:fixed;font-family:arial;font-size:1.5vw;position:fixed;top:0.5%;left:1%;">Verrechnungsampel</h1>
+    <img style="position:fixed;bottom:1%;right:1%;height:6%" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/BMD-Logo-Standard.svg/1200px-BMD-Logo-Standard.svg.png">
+  </body>
