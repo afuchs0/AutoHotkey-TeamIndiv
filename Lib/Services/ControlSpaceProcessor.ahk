@@ -1277,7 +1277,8 @@ class ControlSpaceProcessor {
         ; Pattern: <p align="center">TITLE</p> ... </table>
         ; Das .*? ist non-greedy matching (stoppt beim ersten </table>)
         quote := chr(34)
-        pattern := "i)<p align=" . quote . "center" . quote . ">" . RegExEscape(sectionTitle) . ".*?</table>"
+        escapedTitle := this.RegexEscapeSpecialChars(sectionTitle)
+        pattern := "i)<p align=" . quote . "center" . quote . ">" . escapedTitle . ".*?</table>"
         
         startPos := 1
         while (RegExMatch(html, pattern, &tableMatch, startPos)) {
@@ -1320,6 +1321,26 @@ class ControlSpaceProcessor {
         }
         
         return tables
+    }
+    
+    ; Escape spezielle Regex-Zeichen
+    RegexEscapeSpecialChars(str) {
+        ; Escapen von Zeichen, die in Regex Bedeutung haben: . ^ $ * + ? { } [ ] \ | ( )
+        escaped := StrReplace(str, "\", "\\")
+        escaped := StrReplace(escaped, ".", "\.")
+        escaped := StrReplace(escaped, "^", "\^")
+        escaped := StrReplace(escaped, "$", "\$")
+        escaped := StrReplace(escaped, "*", "\*")
+        escaped := StrReplace(escaped, "+", "\+")
+        escaped := StrReplace(escaped, "?", "\?")
+        escaped := StrReplace(escaped, "{", "\{")
+        escaped := StrReplace(escaped, "}", "\}")
+        escaped := StrReplace(escaped, "[", "\[")
+        escaped := StrReplace(escaped, "]", "\]")
+        escaped := StrReplace(escaped, "|", "\|")
+        escaped := StrReplace(escaped, "(", "\(")
+        escaped := StrReplace(escaped, ")", "\)")
+        return escaped
     }
     
     GetDataFromFile(TableShort, JoinOrField, Filter:="", RecursiveJoin:=true){
