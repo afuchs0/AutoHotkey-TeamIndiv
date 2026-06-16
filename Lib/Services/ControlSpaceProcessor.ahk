@@ -1280,15 +1280,8 @@ class ControlSpaceProcessor {
         escapedTitle := this.RegexEscapeSpecialChars(sectionTitle)
         pattern := "i)<p align=" . quote . "center" . quote . ">" . escapedTitle . ".*?</table>"
         
-        ; Debug: Pattern und Suchwort loggen
-        this.Logger.Log("ExtractHTMLTables: Searching for: " sectionTitle)
-        this.Logger.Log("Pattern: " pattern)
-        
         startPos := 1
-        matchCount := 0
         while (RegExMatch(html, pattern, &tableMatch, startPos)) {
-            matchCount++
-            this.Logger.Log("Found table match #" matchCount)
             tableHtml := tableMatch[0]
             tableData := []
             
@@ -1320,7 +1313,6 @@ class ControlSpaceProcessor {
                 }
             }
             
-            this.Logger.Log("Table has " tableData.Length " columns")
             if (tableData.Length > 0) {
                 tables.Push(tableData)
             }
@@ -1328,11 +1320,8 @@ class ControlSpaceProcessor {
             startPos := tableMatch.Pos + tableMatch.Len
         }
         
-        this.Logger.Log("ExtractHTMLTables: Found " tables.Length " tables total")
-        
         ; Fallback: Wenn nichts gefunden, versuche mit einfacherem Pattern
         if (tables.Length = 0) {
-            this.Logger.Log("No tables found with main pattern, trying fallback...")
             tables := this.ExtractHTMLTablesFallback(html, sectionTitle, maxColumns)
         }
         
@@ -1388,7 +1377,6 @@ class ControlSpaceProcessor {
             }
         }
         
-        this.Logger.Log("Fallback found " tables.Length " tables")
         return tables
     }
     
