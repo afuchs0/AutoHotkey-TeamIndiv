@@ -1269,58 +1269,56 @@ class ControlSpaceProcessor {
 ; ==============================================================================
     ; FUNKTIONIERENDE STRX METHODE (AHK v2)
     ; ==============================================================================
-    StrX(haystack, beginStr := "", beginOffset := 1, beginTrimLength := 1, endStr := "", endOffset := 1, endTrimLength := 1, &nextOffset := 0) {
+    ; Moderne RegEx-basierte HTML-Parsing
+    ; Ersetzt die fragile StrX-Methode mit strukturiertem Regex
+    ExtractHTMLTables(html, sectionTitle, maxColumns) {
+        tables := []
         
-        ; Sicherheitscheck: Start darf nicht kleiner 1 sein
-        local searchStart := (beginOffset < 1) ? 1 : beginOffset
-
-        ; 1. Startposition suchen
-        local posBegin := 0
-        if (beginStr = "")
-            posBegin := 1
-        else
-            posBegin := InStr(haystack, beginStr, false, searchStart)
-
-        ; Nicht gefunden? -> Abbruch & Reset
-        if (posBegin = 0) {
-            nextOffset := 1  ; Setzt t auf 1 zurück
-            return "" 
-        }
-
-        ; 2. Inhalt Start berechnen
-        local contentStart := (beginStr = "") ? 1 : (posBegin + beginTrimLength)
-
-        ; 3. Endposition suchen
-        local haystackLen := StrLen(haystack)
-        local posEnd := 0
-
-        if (endStr = "") {
-            posEnd := haystackLen + 1
-        } else {
-            ; Suche ab contentStart (plus optionalem Offset)
-            local searchEndStart := (endOffset = 0) ? contentStart : (contentStart + endOffset)
+        ; Pattern: <p align="center">TITLE</p> ... </table>
+        ; Das .*? ist non-greedy matching (stoppt beim ersten </table>)
+        pattern := "i)<p align=""center"">" . RegExEscape(sectionTitle) . ".*?</table>"
+        
+        startPos := 1
+        while (RegExMatch(html, pattern, &tableMatch, startPos)) {
+            tableHtml := tableMatch[0]
+            tableData := []
             
-            if (searchEndStart > haystackLen)
-                posEnd := 0
-            else
-                posEnd := InStr(haystack, endStr, false, searchEndStart)
+            ; Jetzt alle <p align="left">...</p> aus dieser Tabelle extrahieren
+            colPattern := "i)<p align=""left"">(.*?)</p>"
+            colStartPos := 1
+            colCount := 0
+            
+            while (RegExMatch(tableHtml, colPattern, &colMatch, colStartPos)) {
+                colContent := colMatch[1]
+                
+                ; HTML-Entities und Tags entfernen
+                colContent := StrReplace(colContent, "&nbsp;", "")
+                colContent := RegExReplace(colContent, "i)<[^>]+>", " ")
+                colContent := Trim(colContent)
+                
+                ; "_" signalisiert Ende der Daten
+                if (colContent = "_") {
+                    break
+                }
+                
+                tableData.Push(colContent)
+                colCount++
+                colStartPos := colMatch.Pos + colMatch.Len
+                
+                ; Maximal maxColumns Spalten pro Tabelle
+                if (colCount >= maxColumns) {
+                    break
+                }
+            }
+            
+            if (tableData.Length > 0) {
+                tables.Push(tableData)
+            }
+            
+            startPos := tableMatch.Pos + tableMatch.Len
         }
-
-        ; End-String nicht gefunden? -> Bis zum Ende nehmen
-        if (posEnd = 0)
-            posEnd := haystackLen + 1
-
-        ; 4. OFFSET UPDATEN
-        ; Da wir im Funktionskopf "&nextOffset" haben, ist dies ein Alias.
-        ; Wir weisen einfach den Wert zu, AHK aktualisiert "t" draußen automatisch.
-        nextOffset := posEnd + endTrimLength
-
-        ; 5. String extrahieren
-        local length := posEnd - contentStart
-        if (length < 0)
-            return ""
-
-        return SubStr(haystack, contentStart, length)
+        
+        return tables
     }
     
     GetDataFromFile(TableShort, JoinOrField, Filter:="", RecursiveJoin:=true){
@@ -1484,91 +1482,53 @@ class ControlSpaceProcessor {
         
         for index, element in ArrayFile
         {
-            t := 1
-            while (true)
+            if (JoinOrField = "Join")
             {
-                if (JoinOrField = "Join")
-                {
-                    maxSpalte := 4
-                    DataTable := this.StrX(element, '<p align="center">Foreign Key Columns', t, 9, "</table>", 1, 1, &t)
-                }
-                else
-                {
-                    maxSpalte := 6
-                    DataTable := this.StrX(element, '<p align="center">Description Text', t, 9, "</table>", 1, 1, &t)
-                }
-                
-                if (DataTable = "")
-                {
-                    break
-                }
-                else
-                {
-                    j := 1
-                    Spalte := 1
-                    
-                    while (true)
-                    {
-                        SpaltenWert := this.StrX(DataTable, '<p align="left">', j, 16, "</p>", 1, 6, &j)
-                        
-                        if (SpaltenWert = "")
-                        {
-                            break
-                        }
-                        else if (SpaltenWert = "_") ; --------- ab hier nicht verfügbare Felder ----------
-                        {
-                            break 3 ; Break aus 3 Ebenen (While->While->For)
-                        }
-                        else
-                        {
-                            SpaltenWert := StrReplace(SpaltenWert, "&nbsp;")
-                            SpaltenWert := Trim(RegExReplace(SpaltenWert, "mU)<.*>", " "))
-                            Zeile.Push(SpaltenWert)
-
-                            Spalte += 1
-                            
-                            if (Spalte > maxSpalte)
-                            {
-                                ; Variable IsMatch statt Filter genutzt, da Filter (String) sonst überschrieben wird
-                                if (JoinOrField = "Join")
-                                {
-                                    IsMatch := false
-                                }
-                                else
-                                {
-                                    IsMatch := true
-                                }
-                                
-                                for asdf, elementfilter in FilterArray
-                                {
-                                    if ((JoinOrField = "Join") AND (elementfilter = TableShort) AND ((InStr(Zeile[1], "_" elementfilter) != 0) AND (InStr(Zeile[1], elementfilter) = 1)))
-                                    {
-                                        IsMatch := true
-                                    } 
-                                    else if ((JoinOrField = "Join") AND (elementfilter != TableShort) AND (InStr(Zeile[1], elementfilter) != 0))
-                                    {
-                                        IsMatch := true
-                                    }
-                                    else if ((JoinOrField != "Join") AND (InStr(Zeile[1], elementfilter) = 0))
-                                    {
-                                        IsMatch := false
-                                    }
-                                }
-                                
-                                if (IsMatch = true)
-                                {
-                                    if (JoinOrField = "Join")
-                                        Zeile.InsertAt(2, "")
-                                        
-                                    ArrayData.Push(Zeile)
-                                }
-                                Spalte := 1
-                                Zeile := []
-                            }
-                        }
-                    }
-                } 
+               maxSpalte := 4
+               tables := this.ExtractHTMLTables(element, "Foreign Key Columns", maxSpalte)
             }
+            else
+            {
+               maxSpalte := 6
+               tables := this.ExtractHTMLTables(element, "Description Text", maxSpalte)
+            }
+            
+            for index2, Zeile in tables
+            {
+               if (JoinOrField = "Join")
+               {
+                   IsMatch := false
+               }
+               else
+               {
+                   IsMatch := true
+               }
+                
+               for asdf, elementfilter in FilterArray
+               {
+                   if ((JoinOrField = "Join") AND (elementfilter = TableShort) AND ((InStr(Zeile[1], "_" elementfilter) != 0) AND (InStr(Zeile[1], elementfilter) = 1)))
+                   {
+                       IsMatch := true
+                   } 
+                   else if ((JoinOrField = "Join") AND (elementfilter != TableShort) AND (InStr(Zeile[1], elementfilter) != 0))
+                   {
+                       IsMatch := true
+                   }
+                   else if ((JoinOrField != "Join") AND (InStr(Zeile[1], elementfilter) = 0))
+                   {
+                       IsMatch := false
+                   }
+               }
+                
+               if (IsMatch = true)
+               {
+                   if (JoinOrField = "Join")
+                       Zeile.InsertAt(2, "")
+                        
+                   ArrayData.Push(Zeile)
+               }
+            }
+        }
         }
         
         ; ManuelleFelder
