@@ -1,0 +1,34 @@
+
+WITH RoundedHour
+AS
+(
+	SELECT 
+	TER_VON, 
+	TER_BIS,
+	TER_BETREFF
+	--Rundung nicht mehr nötig: DATEADD(hour, DATEDIFF(hour, 0, TER_VON), 0) as Rounded_TER_VON,
+	--Rundung nicht mehr nötig: DATEADD(hour, DATEDIFF(hour, 0,DATEADD(minute, 59 - DATEPART(minute, TER_BIS + '00:59:00.000'),TER_BIS)), 0) as Rounded_TER_BIS
+	FROM BUERO.TER_VIEW_TERMINE_UNION 
+	LEFT JOIN BUERO.MIT_MITARBEITER ON MIT_FIRMENNR = TER_MIT_FIRMENNR AND MIT_MITARBEITERID = TER_MITARBEITERID
+	WHERE MIT_BMDUSERID='FUC868'
+	AND convert(date,TER_VON , 104)>=convert(date,GETDATE() , 104)
+	AND convert(date,TER_BIS , 104)<= convert(date,DATEADD(month, 4, GETDATE()) , 104)
+	AND ISNULL(TER_KATEGORIELFDNR,0) NOT IN (45, 209, 207)
+),
+MeinKalenderTimeslots AS
+(
+	SELECT TER_VON, TER_BIS, TER_BETREFF, 'Kalender' as Typ
+	FROM RoundedHour
+
+	UNION ALL 
+
+	SELECT DISTINCT FTG_FEIERTAGDATUM, DATEADD(minute, 59, DATEADD(hour, 23, FTG_FEIERTAGDATUM)), FTG_FEIERTAGBEZ, 'Feiertag' as Typ
+	FROM BUERO.FTG_FEIERTAG
+	WHERE convert(date,FTG_FEIERTAGDATUM , 104)>=convert(date,GETDATE() , 104)
+	AND convert(date,FTG_FEIERTAGDATUM , 104)<= convert(date,DATEADD(month, 4, GETDATE()) , 104)
+	AND FTG_LANDNR = 1
+)
+--SELECT * FROM RoundedHour ORDER BY Rounded_TER_VON
+SELECT FORMAT(TER_VON,'yyyyMMddHHmmss') as Von,FORMAT(TER_BIS,'yyyyMMddHHmmss') as Bis, *
+FROM MeinKalenderTimeslots
+ORDER BY TER_VON
