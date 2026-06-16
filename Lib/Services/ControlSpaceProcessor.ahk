@@ -1280,8 +1280,15 @@ class ControlSpaceProcessor {
         escapedTitle := this.RegexEscapeSpecialChars(sectionTitle)
         pattern := "i)<p align=" . quote . "center" . quote . ">" . escapedTitle . ".*?</table>"
         
+        ; Debug: Pattern und Suchwort loggen
+        this.Logger.Log("ExtractHTMLTables: Searching for: " sectionTitle)
+        this.Logger.Log("Pattern: " pattern)
+        
         startPos := 1
+        matchCount := 0
         while (RegExMatch(html, pattern, &tableMatch, startPos)) {
+            matchCount++
+            this.Logger.Log("Found table match #" matchCount)
             tableHtml := tableMatch[0]
             tableData := []
             
@@ -1313,6 +1320,7 @@ class ControlSpaceProcessor {
                 }
             }
             
+            this.Logger.Log("Table has " tableData.Length " columns")
             if (tableData.Length > 0) {
                 tables.Push(tableData)
             }
@@ -1320,6 +1328,67 @@ class ControlSpaceProcessor {
             startPos := tableMatch.Pos + tableMatch.Len
         }
         
+        this.Logger.Log("ExtractHTMLTables: Found " tables.Length " tables total")
+        
+        ; Fallback: Wenn nichts gefunden, versuche mit einfacherem Pattern
+        if (tables.Length = 0) {
+            this.Logger.Log("No tables found with main pattern, trying fallback...")
+            tables := this.ExtractHTMLTablesFallback(html, sectionTitle, maxColumns)
+        }
+        
+        return tables
+    }
+    
+    ; Fallback-Parser für alternative HTML-Strukturen
+    ExtractHTMLTablesFallback(html, sectionTitle, maxColumns) {
+        tables := []
+        
+        ; Fallback: Suche einfach nach "</table>" Grenzen
+        tableSections := StrSplit(html, "</table>")
+        
+        for index, section in tableSections {
+            if (InStr(section, sectionTitle) = 0) {
+                continue
+            }
+            
+            tableData := []
+            
+            ; Suche alle <p>...</p> oder <td>...</td> in diesem Abschnitt
+            cellPattern := "i)<(?:p|td)[^>]*>(.*?)</(?:p|td)>"
+            cellStartPos := 1
+            cellCount := 0
+            
+            while (RegExMatch(section, cellPattern, &cellMatch, cellStartPos)) {
+                cellContent := cellMatch[1]
+                
+                ; HTML bereinigen
+                cellContent := StrReplace(cellContent, "&nbsp;", "")
+                cellContent := RegExReplace(cellContent, "i)<[^>]+>", " ")
+                cellContent := RegExReplace(cellContent, "&[a-z]+;", "")  ; HTML-Entities
+                cellContent := Trim(cellContent)
+                
+                if (cellContent = "" || cellContent = "_") {
+                    if (cellContent = "_")
+                        break
+                    cellStartPos := cellMatch.Pos + cellMatch.Len
+                    continue
+                }
+                
+                tableData.Push(cellContent)
+                cellCount++
+                cellStartPos := cellMatch.Pos + cellMatch.Len
+                
+                if (cellCount >= maxColumns) {
+                    break
+                }
+            }
+            
+            if (tableData.Length > 0) {
+                tables.Push(tableData)
+            }
+        }
+        
+        this.Logger.Log("Fallback found " tables.Length " tables")
         return tables
     }
     
