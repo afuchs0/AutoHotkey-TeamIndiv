@@ -1527,8 +1527,7 @@ class ControlSpaceProcessor {
                         
                    ArrayData.Push(Zeile)
                }
-            }
-        }
+           }
         }
         
         ; ManuelleFelder
