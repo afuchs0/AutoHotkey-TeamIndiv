@@ -1276,7 +1276,7 @@ class ControlSpaceProcessor {
         
         ; Pattern: <p align="center">TITLE</p> ... </table>
         ; Das .*? ist non-greedy matching (stoppt beim ersten </table>)
-        pattern := "i)<p align=""center"">" . RegExEscape(sectionTitle) . ".*?</table>"
+        pattern := "i)<p align=" . """center"""  . ">" . RegExEscape(sectionTitle) . ".*?</table>"
         
         startPos := 1
         while (RegExMatch(html, pattern, &tableMatch, startPos)) {
@@ -1284,7 +1284,7 @@ class ControlSpaceProcessor {
             tableData := []
             
             ; Jetzt alle <p align="left">...</p> aus dieser Tabelle extrahieren
-            colPattern := "i)<p align=""left"">(.*?)</p>"
+            colPattern := "i)<p align=" . """left""" . ">(.*?)</p>"
             colStartPos := 1
             colCount := 0
             
