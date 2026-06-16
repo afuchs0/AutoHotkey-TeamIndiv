@@ -1127,17 +1127,15 @@ class ControlSpaceProcessor {
     }
 
     IsJoinSearch(cmd) {
-        return (FileExist(this.Paths.Tabellenbeschreibung "\Tabellenbeschreibung.htm") 
-             && StrLen(cmd) = 6 
+        ; Prüfe: Länge 6, nur Buchstaben, und es gibt Daten für diesen Join
+        return (StrLen(cmd) = 6 
              && RegExMatch(cmd, "^[a-zA-Z]+$") = 1
              && IsObject(this.GetDataFromFile(SubStr(cmd, 1, 3), "Join", SubStr(cmd, 4, 3))))
     }
 
     IsFieldSearch(cmd) {
         ; 1. "Billige" Syntax-Prüfungen zuerst (Performance: Dateizugriff vermeiden, wenn Syntax schon falsch ist)
-        if !(FileExist(this.Paths.Tabellenbeschreibung "\Tabellenbeschreibung.htm") 
-            && InStr(cmd, "_")
-            && StrLen(cmd) > 3)
+        if !(InStr(cmd, "_") && StrLen(cmd) > 3)
         {
             return false
         }
