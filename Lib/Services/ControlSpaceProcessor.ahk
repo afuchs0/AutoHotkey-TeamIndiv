@@ -1448,6 +1448,12 @@ class ControlSpaceProcessor {
         t := 1
         while (true)
         {
+            ; Bounds-Check: Stelle sicher, dass der Index gültig ist
+            if (SeitenHTMLTableIndex > HTMLTablesInFile.Length)
+            {
+                break
+            }
+            
             ; StrX Aufruf: &t wird verwendet, falls StrX den Offset per Referenz updated
             ; Ändern Sie 'htm"' zu '"'
             ; Ändern Sie 'htm"' zu '"'
