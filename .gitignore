@@ -1,2 +1,3 @@
 Assets/SQL/Tabellenbeschreibung/*
-Assets/Config/config_privat.txt
+*.tmp
+Assets/Config/settings.user.ini
