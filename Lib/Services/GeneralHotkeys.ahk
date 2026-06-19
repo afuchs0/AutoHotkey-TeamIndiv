@@ -228,8 +228,6 @@ class GeneralHotkeys {
             GeneralHotkeys.WaitAllModifiersUp()         ; ← alle Modifier abwarten
             SendInput "^+{Left}"
             selectedText := ClipboardUtil.CopyAndRestore()
-            KeyWait "Shift"          ; warten bis Shift losgelassen = Selektion abgeschlossen
-            selectedText := ClipboardUtil.CopyAndRestore()
 
             if (isSafeWindow) {
                 this.CsProcessor.Process(selectedText, winTitle)
